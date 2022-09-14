@@ -47,6 +47,7 @@ app.get('/git/:owner/:repo', async (req: Request, res: Response) => {
     }
     let authHeaders = {};
     if (req.query.token) {
+        console.log('1');
         authHeaders = {
             Authorization: `Bearer ${req.query?.token}`
         };
@@ -55,17 +56,20 @@ app.get('/git/:owner/:repo', async (req: Request, res: Response) => {
         .get(`${githubApiUrl}/${req.params.owner}/${req.params.repo}`, {
             headers: authHeaders
         })
-        .then((response) => response?.data)
-        .then((response: BitBucketResponse) => {
+        .then((response) => {
+            if (!response?.data) {
+                return res.status(400).send('Invalid response').end();
+            }
+            const bitBucketData: BitBucketResponse = response?.data;
             const resp = {
-                name: response.name,
-                description: response.description,
-                size: response.size,
-                stars: response.stargazers_count,
-                watchers: response.watchers_count,
-                forks: response.forks_count,
-                subscribers: response.subscribers_count,
-                rating: getRating(response.watchers_count)
+                name: bitBucketData.name,
+                description: bitBucketData.description,
+                size: bitBucketData.size,
+                stars: bitBucketData.stargazers_count,
+                watchers: bitBucketData.watchers_count,
+                forks: bitBucketData.forks_count,
+                subscribers: bitBucketData.subscribers_count,
+                rating: getRating(bitBucketData.watchers_count)
             } as RepoReponse;
             return res.status(200).send(resp);
         })
